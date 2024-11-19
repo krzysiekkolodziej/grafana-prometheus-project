@@ -1,2 +1,8 @@
-# grafana-prometheus-project
-Project made for univeristy subject Integration Systems. Used Grafana, Prometheus, Apache httpd, k6
+
+`` IMPORTANT ``
+Remember to modify conf/httpd.conf:
+
+<Location "/server-status">
+    SetHandler server-status
+    Require host example.com
+</Location>

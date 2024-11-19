@@ -1,0 +1,73 @@
+version: '3'
+name: systemy-integracyjne-monitoring
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus:/etc/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+    restart: always
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    ports:
+      - '3000:3000'
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+    restart: always
+    environment:
+      - GRAFANA_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+
+  alertmanager:
+    container_name: alertmanager
+    image: prom/alertmanager
+    ports:
+      - '9093:9093'
+    volumes:
+      - ./alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    restart: always
+    environment:
+      - ALERT_MANAGER_SMTP_SMARTHOST=${ALERT_MANAGER_SMTP_SMARTHOST}
+      - ALERT_MANAGER_SMTP_FROM=${ALERT_MANAGER_SMTP_FROM}
+      - ALERT_MANAGER_SMTP_AUTH_USERNAME=${ALERT_MANAGER_SMTP_AUTH_USERNAME}
+      - ALERT_MANAGER_SMTP_AUTH_PASSWORD=${ALERT_MANAGER_SMTP_AUTH_PASSWORD}
+  web_server:
+    container_name: web_server
+    image: httpd:2.4
+    ports:
+      - '80:80'
+    restart: always
+
+  k6:
+    image: grafana/k6
+    container_name: k6
+    volumes:
+      - ./k6:/scripts
+    entrypoint: ["k6", "run", "--summary-trend-stats=med,p(95),p(99.9)", "/scripts/load_test.js"]
+    depends_on:
+      - web_server
+
+  apache_exporter:
+    container_name: apache_exporter
+    ports:
+      - "9117:9117"
+    build: 
+      context: .
+      dockerfile: ./apache_exporter/Dockerfile
+    depends_on:
+      - web_server
+    restart: always
