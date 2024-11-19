@@ -1,5 +1,5 @@
 groups:
-- name: Example alerts
+- name: alert_rules
   rules:
   - alert: HighRequestRate
     expr: rate(http_requests_total{job="web_server"}[5m]) > 100
@@ -18,3 +18,12 @@ groups:
     annotations:
       summary: High CPU load detected
       description: '{{ $labels.instance }} has CPU load >0.8 for the last 5 minutes.'
+
+  - alert: InstanceDown
+    expr: apache_up == 0
+    for: 30s
+    labels:
+      severity: critical
+    annotations:
+      summary: Instance down
+      description: '{{ $labels.instance }} is down for more than 30 seconds.'
