@@ -11,6 +11,8 @@ To enable and configure `server-status` for the Apache server in the `apache_exp
 2. **edit httpd.conf**:
    Edit the `httpd.conf` file: Use nano to edit the configuration file:
    ```bash
+   apt-get update
+   apt-get install nano
    nano conf/httpd.conf
    ```
 
@@ -20,7 +22,7 @@ To enable and configure `server-status` for the Apache server in the `apache_exp
    ExtendedStatus On
    <Location "/server-status">
       SetHandler server-status
-      Require host example.com
+      Require all granted
    </Location>
    ```
 
